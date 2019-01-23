@@ -35,7 +35,7 @@
   </modules>
   <profiles>
     <profile>
-      <id>default</id>
+        <id>default</id>
       <activation>
         <property>
           <name>!deploy</name>
@@ -51,109 +51,125 @@
         </dependency>
       </dependencies>
     </profile>
-  </profiles>
-  <build>
-    <resources>
-      <resource>
-        <directory>src/main/resources</directory>
-      </resource>
-      <resource>
-        <directory>${project.build.directory}/generated-resources</directory>
-      </resource>
-    </resources>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>default-testCompile</id>
-            <goals>
-              <goal>testCompile</goal>
-            </goals>
-            <configuration>
-              <skip>${deploy}</skip>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <executions>
-          <execution>
-            <goals>
-              <goal>tree</goal>
-            </goals>
-            <phase>generate-resources</phase>
-            <configuration>
-              <outputType>tgf</outputType>
-              <outputFile>${project.build.directory}/generated-resources/dependencies.tgf</outputFile>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <trimStackTrace>false</trimStackTrace>
-          <reuseForks>false</reuseForks>
-          <includes>
-            <include>**/*Test</include>
-            <include>**/*TestCase</include>
-          </includes>
-          <excludes>
-            <exclude>**/*ITest</exclude>
-            <exclude>**/*IntegrationTest</exclude>
-            <exclude>**/*IntegrationTestCase</exclude>
-          </excludes>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-failsafe-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>integration-test</id>
-            <goals>
-              <goal>integration-test</goal>
-              <goal>verify</goal>
-            </goals>
-            <phase>integration-test</phase>
+    <profile>
+      <id>src</id>
+      <activation>
+        <file>
+          <exists>src</exists>
+        </file>
+      </activation>
+      <build>
+        <resources>
+          <resource>
+            <directory>src/main/resources</directory>
+          </resource>
+          <resource>
+            <directory>${project.build.directory}/generated-resources</directory>
+          </resource>
+        </resources>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>default-testCompile</id>
+                <goals>
+                  <goal>testCompile</goal>
+                </goals>
+                <configuration>
+                  <skip>${deploy}</skip>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>tree</goal>
+                </goals>
+                <phase>generate-resources</phase>
+                <configuration>
+                  <outputType>tgf</outputType>
+                  <outputFile>${project.build.directory}/generated-resources/dependencies.tgf</outputFile>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
               <trimStackTrace>false</trimStackTrace>
               <reuseForks>false</reuseForks>
               <includes>
-                <include>**/*ITest</include>
-                <include>**/*IntegrationTest</include>
-                <include>**/*IntegrationTestCase</include>
+                <include>**/*Test</include>
+                <include>**/*TestCase</include>
               </includes>
               <excludes>
-                <exclude></exclude> <!-- This is necessary for inner classes to be run -->
+                <exclude>**/*ITest</exclude>
+                <exclude>**/*IntegrationTest</exclude>
+                <exclude>**/*IntegrationTestCase</exclude>
               </excludes>
             </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>io.opentracing.contrib</groupId>
-        <artifactId>specialagent-maven-plugin</artifactId>
-        <version>${project.version}</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>fingerprint</goal>
-            </goals>
-            <phase>generate-resources</phase>
-            <configuration>
-              <destFile>${project.build.directory}/generated-resources/fingerprint.bin</destFile>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>integration-test</id>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+                <phase>integration-test</phase>
+                <configuration>
+                  <trimStackTrace>false</trimStackTrace>
+                  <reuseForks>false</reuseForks>
+                  <includes>
+                    <include>**/*ITest</include>
+                    <include>**/*IntegrationTest</include>
+                    <include>**/*IntegrationTestCase</include>
+                  </includes>
+                  <excludes>
+                    <exclude></exclude> <!-- This is necessary for inner classes to be run -->
+                  </excludes>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>io.opentracing.contrib</groupId>
+            <artifactId>specialagent-maven-plugin</artifactId>
+            <version>${project.version}</version>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>fingerprint</goal>
+                </goals>
+                <phase>generate-resources</phase>
+                <configuration>
+                  <destFile>${project.build.directory}/generated-resources/fingerprint.bin</destFile>
+                </configuration>
+              </execution>
+            </executions>
+            <dependencies>
+              <dependency>
+                <!-- This is necessary for cobertura to integrate with plugins -->
+                <groupId>net.sourceforge.cobertura</groupId>
+                <artifactId>cobertura</artifactId>
+                <version>${version.cobertura}</version>
+              </dependency>
+            </dependencies>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
   <dependencies>
     <dependency>
       <groupId>net.bytebuddy</groupId>
