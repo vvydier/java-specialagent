@@ -134,6 +134,7 @@
     <profile>
       <id>pom</id>
       <activation>
+        <jdk>1.8</jdk>
         <file>
           <missing>src</missing>
         </file>
