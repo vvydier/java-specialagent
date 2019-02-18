@@ -74,6 +74,7 @@ import net.bytebuddy.agent.ByteBuddyAgent;
  */
 public class AgentRunner extends BlockJUnit4ClassRunner {
   private static final Logger logger = Logger.getLogger(AgentRunner.class.getName());
+  private static final URL[] classpath = Util.classPathToURLs(System.getProperty("java.class.path"));
   private static final Instrumentation inst;
 
   private static JarFile createJarFileOfSource(final Class<?> cls) throws IOException {
@@ -168,7 +169,7 @@ public class AgentRunner extends BlockJUnit4ClassRunner {
      *         <p>
      *         Default: {@code true}.
      */
-    boolean isolateClassLoader() default true;
+    Class<?>[] bootstrap() default {};
   }
 
   /**
@@ -190,6 +191,17 @@ public class AgentRunner extends BlockJUnit4ClassRunner {
    * @throws InterruptedException If a required Maven subprocess is interrupted.
    */
   private static Class<?> loadClassInIsolatedClassLoader(final Class<?> testClass) throws InitializationError, InterruptedException {
+    final Config config = testClass.getAnnotation(Config.class);
+//    if (config != null && !Object.class.equals(config.bootstrap())) {
+//      final Class<?> bootClass = config.bootstrap();
+//      try {
+//        Class.forName(bootClass.getName());
+//      }
+//      catch (final ClassNotFoundException e) {
+//        throw new InitializationError(e);
+//      }
+//    }
+
     try {
       final String testClassesPath = testClass.getProtectionDomain().getCodeSource().getLocation().getPath();
       final String classesPath = testClassesPath.endsWith(".jar") ? testClassesPath.replace(".jar", "-tests.jar") : testClassesPath.replace("/test-classes/", "/classes/");
@@ -211,16 +223,15 @@ public class AgentRunner extends BlockJUnit4ClassRunner {
       }
 
       final List<String> pluginPaths = findPluginPaths(dependenciesUrl);
-
       pluginPaths.add(testClassesPath);
       pluginPaths.add(classesPath);
+      final Class<?>[] boostrapClasses = config.bootstrap();
+      for (int i = 0; i < boostrapClasses.length; ++i) {
+        inst.appendToBootstrapClassLoaderSearch(new JarFile(boostrapClasses[i].getProtectionDomain().getCodeSource().getLocation().getPath()));
+      }
+
       final Set<String> isolatedClasses = TestUtil.getClassFiles(pluginPaths);
-
-      final URL[] libs = Util.classPathToURLs(System.getProperty("java.class.path"));
-      // Special case for AgentRunnerITest, because it belongs to the same
-      // classpath path as the AgentRunner
-
-      final URLClassLoader classLoader = new URLClassLoader(libs, new ClassLoader(ClassLoader.getSystemClassLoader()) {
+      final URLClassLoader classLoader = new URLClassLoader(classpath, new ClassLoader(ClassLoader.getSystemClassLoader()) {
         private final ClassLoader bootstrapClassLoader = new URLClassLoader(new URL[0], null);
 
         @Override
@@ -252,8 +263,6 @@ public class AgentRunner extends BlockJUnit4ClassRunner {
     final String dependenciesTgf = dependenciesUrl == null ? null : new String(Util.readBytes(dependenciesUrl));
 
     final List<String> pluginPaths = new ArrayList<>();
-    final URL[] classpath = Util.classPathToURLs(System.getProperty("java.class.path"));
-
     final URL[] pluginUrls = Util.filterPluginURLs(classpath, dependenciesTgf, false, "compile");
     for (int i = 0; i < pluginUrls.length; ++i)
       pluginPaths.add(pluginUrls[i].getFile());
@@ -287,7 +296,7 @@ public class AgentRunner extends BlockJUnit4ClassRunner {
    * @throws InterruptedException If a required Maven subprocess is interrupted.
    */
   public AgentRunner(final Class<?> testClass) throws InitializationError, InterruptedException {
-    super(testClass.getAnnotation(Config.class) == null || testClass.getAnnotation(Config.class).isolateClassLoader() ? loadClassInIsolatedClassLoader(testClass) : testClass);
+    super(loadClassInIsolatedClassLoader(testClass));
     this.config = testClass.getAnnotation(Config.class);
     if (config != null) {
       if (config.log() != Config.Log.INFO) {
@@ -406,10 +415,8 @@ public class AgentRunner extends BlockJUnit4ClassRunner {
         if (logger.isLoggable(Level.FINEST))
           logger.finest("invokeExplosively [" + getName() + "](" + target + ")");
 
-        if (config == null || config.isolateClassLoader()) {
-          final ClassLoader classLoader = isStatic() ? method.getDeclaringClass().getClassLoader() : target.getClass().getClassLoader();
-          Assert.assertEquals("Method " + getName() + " should be executed in URLClassLoader", URLClassLoader.class, classLoader == null ? null : classLoader.getClass());
-        }
+        final ClassLoader classLoader = isStatic() ? method.getDeclaringClass().getClassLoader() : target.getClass().getClassLoader();
+        Assert.assertEquals("Method " + getName() + " should be executed in URLClassLoader", URLClassLoader.class, classLoader == null ? null : classLoader.getClass());
 
         final Object object = method.getMethod().getParameterTypes().length == 1 ? super.invokeExplosively(target, AgentRunnerUtil.getTracer()) : super.invokeExplosively(target);
         --delta;

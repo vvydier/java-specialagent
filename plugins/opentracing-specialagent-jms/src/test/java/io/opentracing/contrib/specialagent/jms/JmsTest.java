@@ -95,7 +95,7 @@ public abstract class JmsTest {
     final TextMessage message = session.createTextMessage("Hello world");
     producer.send(message);
 
-    await().atMost(15, TimeUnit.SECONDS).until(reportedSpansSize(tracer), equalTo(2));
+    await().atMost(5, TimeUnit.SECONDS).until(reportedSpansSize(tracer), equalTo(2));
 
     final List<MockSpan> finishedSpans = tracer.finishedSpans();
     assertEquals(2, finishedSpans.size());

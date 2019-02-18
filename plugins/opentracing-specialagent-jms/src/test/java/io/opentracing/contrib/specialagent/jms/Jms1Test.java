@@ -14,25 +14,28 @@
  */
 package io.opentracing.contrib.specialagent.jms;
 
+import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
 import javax.jms.Session;
+import javax.management.j2ee.statistics.Stats;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.fusesource.hawtbuf.UTF8Buffer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.runner.RunWith;
+import org.slf4j.LoggerFactory;
 
 import io.opentracing.contrib.specialagent.AgentRunner;
 import io.opentracing.mock.MockTracer;
 
 @RunWith(AgentRunner.class)
-@AgentRunner.Config(isolateClassLoader = false)
+@AgentRunner.Config(bootstrap={ActiveMQConnectionFactory.class, ConnectionFactory.class, LoggerFactory.class, Stats.class, UTF8Buffer.class})
 public class Jms1Test extends JmsTest {
   @Before
   public void before(final MockTracer tracer) throws JMSException {
     tracer.reset();
-    final ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("vm://localhost?broker.persistent=false");
-    connection = connectionFactory.createConnection();
+    connection = ActiveMQ.createConnection();
     connection.start();
     session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
   }
