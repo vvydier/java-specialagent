@@ -190,6 +190,7 @@ public class AgentRunner extends BlockJUnit4ClassRunner {
      *         {@code true}.
      */
     Class<?>[] bootstrap() default {};
+    Class<?>[] system() default {};
   }
 
   /**
@@ -248,6 +249,11 @@ public class AgentRunner extends BlockJUnit4ClassRunner {
       final Class<?>[] boostrapClasses = config.bootstrap();
       for (int i = 0; i < boostrapClasses.length; ++i) {
         inst.appendToBootstrapClassLoaderSearch(new JarFile(boostrapClasses[i].getProtectionDomain().getCodeSource().getLocation().getPath()));
+      }
+
+      final Class<?>[] systemClasses = config.system();
+      for (int i = 0; i < systemClasses.length; ++i) {
+        inst.appendToSystemClassLoaderSearch(new JarFile(systemClasses[i].getProtectionDomain().getCodeSource().getLocation().getPath()));
       }
 
       final Set<String> isolatedClasses = TestUtil.getClassFiles(pluginPaths);
@@ -342,9 +348,6 @@ public class AgentRunner extends BlockJUnit4ClassRunner {
           System.setProperty(SpecialAgent.EVENTS_PROPERTY, builder.toString());
         }
       }
-
-      if (!config.isolateClassLoader())
-        logger.warning("`isolateClassLoader=false`\nAll attempts should be taken to avoid setting `isolateClassLoader=false`");
     }
 
     try {

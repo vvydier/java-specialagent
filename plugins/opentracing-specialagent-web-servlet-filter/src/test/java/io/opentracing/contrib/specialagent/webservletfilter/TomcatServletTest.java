@@ -27,12 +27,14 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.catalina.Context;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.startup.Tomcat;
+import org.apache.jasper.servlet.JasperInitializer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import io.opentracing.contrib.specialagent.AgentRunner;
+import io.opentracing.contrib.specialagent.AgentRunner.Config.Log;
 import io.opentracing.contrib.specialagent.Manager.Event;
 import io.opentracing.mock.MockTracer;
 import okhttp3.OkHttpClient;
@@ -44,7 +46,7 @@ import okhttp3.Response;
  * @author Seva Safris
  */
 @RunWith(AgentRunner.class)
-@AgentRunner.Config(isolateClassLoader=false, events=Event.ERROR)
+@AgentRunner.Config(events=Event.ERROR, log=Log.FINE, system={Tomcat.class, JasperInitializer.class})
 public class TomcatServletTest {
   private int serverPort = 9786;
   private Tomcat tomcatServer;
