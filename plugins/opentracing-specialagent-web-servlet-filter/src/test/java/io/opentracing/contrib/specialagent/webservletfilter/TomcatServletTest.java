@@ -20,6 +20,7 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
@@ -48,6 +49,8 @@ import okhttp3.Response;
 @RunWith(AgentRunner.class)
 @AgentRunner.Config(events=Event.ERROR, log=Log.FINE, system={Tomcat.class, JasperInitializer.class})
 public class TomcatServletTest {
+  private static final Logger logger = Logger.getLogger(TomcatServletTest.class.getName());
+
   private int serverPort = 9786;
   private Tomcat tomcatServer;
 
@@ -67,7 +70,7 @@ public class TomcatServletTest {
     appContext.addServletMappingDecoded("/hello", "helloWorldServlet");
 
     tomcatServer.start();
-    System.out.println("Tomcat server: http://" + tomcatServer.getHost().getName() + ":" + serverPort + "/");
+    logger.info("Tomcat server: http://" + tomcatServer.getHost().getName() + ":" + serverPort + "/");
   }
 
   @Test

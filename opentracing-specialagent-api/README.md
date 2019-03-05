@@ -10,7 +10,7 @@ If you are interested in contributing to the <ins>SpecialAgent</ins> project by 
 
 ## Overview
 
-This project provides the API for instrumentation plugins to integrate into _SpecialAgent_'s auto-instrumentation hooks. The API is a light wrapper on top of [ByteBuddy](http://bytebuddy.net/), which enables a plugin developer to use the full breadth of ByteBuddy's @Advice intercept API.
+This project provides the API for instrumentation plugins to integrate into <ins>SpecialAgent</ins>'s auto-instrumentation hooks. The API is a light wrapper on top of [ByteBuddy](http://bytebuddy.net/), which enables a plugin developer to use the full breadth of ByteBuddy's @Advice intercept API.
 
 #### Implementing the Instrumentation Logic
 
@@ -30,9 +30,9 @@ The _SpecialAgent Plugin API_ is intended to be integrated into an OpenTracing i
 
     ```xml
     <dependency>
-      <groupId>io.opentracing.contrib</groupId>
+      <groupId>io.opentracing.contrib.specialagent</groupId>
       <artifactId>opentracing-specialagent-api</artifactId>
-      <version>${project.version}</version>
+      <version>0.9.0</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -56,16 +56,15 @@ The _SpecialAgent Plugin API_ is intended to be integrated into an OpenTracing i
     The `AgentPlugin` interface defines one method:
 
     ```java
-    AgentBuilder buildAgent(String agentArgs) throws Exception;
+    Iterable<? extends AgentBuilder> buildAgent(String agentArgs) throws Exception;
     ```
 
     An example implementation for an instrumentation plugin that instruments the `com.example.TargetBuilder#build(String)` method in an example 3rd-party library:
 
     ```java
       public class TargetAgentPlugin implements AgentPlugin {
-        public AgentBuilder buildAgent(final String agentArgs) throws Exception {
-          return new AgentBuilder.Default()
-            // .with(new DebugListener())                 // DebugListener to debug ByteBuddy's transformations.
+        public Iterable<? extends AgentBuilder> buildAgent(final String agentArgs) throws Exception {
+          return Arrays.asList(new AgentBuilder.Default()
             .with(RedefinitionStrategy.RETRANSFORMATION)  // Allows loaded classes to be retransformed.
             .with(InitializationStrategy.NoOp.INSTANCE)   // Singleton instantiation of loaded type initializers.
             .with(TypeStrategy.Default.REDEFINE)          // Allows loaded classes to be redefined.
@@ -85,7 +84,7 @@ The _SpecialAgent Plugin API_ is intended to be integrated into an OpenTracing i
                   .to(TargetAgentPlugin.class)            // A class literal reference to this class.
                   .on(named("builder")                    // The method name which to intercept on the "com.example.TargetBuilder" class.
                     .and(takesArguments(String.class)))); // Additional specification for the method intercept.
-              }});
+              }}));
           }
 
           // The @Advice method that defines the intercept callback. It is important this method does not require any
@@ -94,8 +93,8 @@ The _SpecialAgent Plugin API_ is intended to be integrated into an OpenTracing i
           // 3rd-party library must be defined in the TargetAgentIntercept class (in this example).
           @Advice.OnMethodExit
           public static void exit(@Advice.Origin Method method, @Advice.Return(readOnly = false, typing = Typing.DYNAMIC) Object returned) throws Exception {
-            System.out.println(">>>>>> " + method);
-            returned = TargetAgentIntercept.exit(returned);
+            if (AgentPluginUtil.isEnabled())              // Prevents the SpecialAgent from instrumenting the tracer itself.
+              returned = TargetAgentIntercept.exit(returned);
           }
         }
 
@@ -111,21 +110,21 @@ The _SpecialAgent Plugin API_ is intended to be integrated into an OpenTracing i
 
 4. **Create a `otaplugins.txt` file**
 
-    The `otaplugins.txt` file identifies the classes that implement `AgentPlugin`, so that the _SpecialAgent_ knows to load them during startup.
+    The `otaplugins.txt` file identifies the classes that implement `AgentPlugin`, so that the <ins>SpecialAgent</ins> knows to load them during startup.
 
     The `otaplugins.txt` file for this example will be:
 
-    ```
+    ```java
     io.opentracing.contrib.example.TargetAgentPlugin
     ```
 
-    Multiple `AgentPlugin` implementations can be specified in the `otaplugins.txt` file, each of which will be loaded by _SpecialAgent_ during startup.
+    Multiple `AgentPlugin` implementations can be specified in the `otaplugins.txt` file, each of which will be loaded by <ins>SpecialAgent</ins> during startup.
 
-    Put the file in `src/main/resources` for it to be found by _SpecialAgent_.
+    Put the file in `src/main/resources` for it to be found by <ins>SpecialAgent</ins>.
 
 5. **Implement a JUnit test that uses `AgentRunner`**
 
-    Please refer to the [Test Usage](https://github.com/opentracing-contrib/java-specialagent/#test-usage) section in the SpecialAgent.
+    Please refer to the [Test Usage](https://github.com/opentracing-contrib/java-specialagent/#test-usage) section in the <ins>SpecialAgent</ins>.
 
 
 ## `AgentRunner` Usage
@@ -140,9 +139,9 @@ The `AgentRunner` is available in the test jar of the <ins>SpecialAgent</ins> mo
 
 ```xml
 <dependency>
-  <groupId>io.opentracing.contrib</groupId>
+  <groupId>io.opentracing.contrib.specialagent</groupId>
   <artifactId>opentracing-specialagent</artifactId>
-  <version>${project.version}</version>
+  <version>0.9.0</version>
   <type>test-jar</type>
   <scope>test</scope>
 </dependency>
@@ -214,9 +213,9 @@ The <ins>SpecialAgent</ins> has specific requirements for packaging of instrumen
     2. Next, include the following plugin in the project's POM:
         ```xml
         <plugin>
-          <groupId>io.opentracing.contrib</groupId>
-          <artifactId>specialagent-maven-plugin</artifactId>
-          <version>0.0.1-SNAPSHOT</version>
+          <groupId>io.opentracing.contrib.specialagent</groupId>
+          <artifactId>agentplugin-maven-plugin</artifactId>
+          <version>0.9.0</version>
           <executions>
             <execution>
               <goals>
@@ -256,7 +255,7 @@ The <ins>SpecialAgent</ins> provides a convenient methodology for testing of the
 
 #### Including the Instrumentation Plugin in the <ins>SpecialAgent</ins>
 
-Instrumentation plugins must be explicitly packaged into the main JAR of the <ins>SpecialAgent</ins>. Please refer to the `<id>deploy</id>` profile in the [`POM`](https://github.com/opentracing-contrib/java-specialagent/blob/master/opentracing-specialagent/pom.xml) for an example of the usage.
+Instrumentation plugins must be explicitly packaged into the main JAR of the <ins>SpecialAgent</ins>. Please refer to the `<id>assemble</id>` profile in the [`POM`](https://github.com/opentracing-contrib/java-specialagent/blob/master/opentracing-specialagent/pom.xml) for an example of the usage.
 
 ## Debugging
 

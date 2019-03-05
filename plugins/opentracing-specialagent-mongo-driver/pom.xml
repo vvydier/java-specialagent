@@ -19,16 +19,18 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>io.opentracing.contrib</groupId>
-    <artifactId>java-specialagent-plugins</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <groupId>io.opentracing.contrib.specialagent.plugins</groupId>
+    <artifactId>plugins</artifactId>
+    <version>0.9.1-SNAPSHOT</version>
   </parent>
+  <artifactId>opentracing-specialagent-mongo-driver</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
+  <url>https://github.com/opentracing-contrib/java-specialagent/tree/master/plugins/opentracing-specialagent-mongo-driver</url>
   <properties>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
     <version.org.mongodb.mongo-java-driver>3.8.1</version.org.mongodb.mongo-java-driver>
   </properties>
-  <artifactId>opentracing-specialagent-mongo-driver</artifactId>
   <dependencies>
     <dependency>
       <!-- https://github.com/opentracing-contrib/java-mongo-driver -->
